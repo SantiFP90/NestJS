@@ -12,7 +12,6 @@ export class CreateTaskHandler implements ICommandHandler<CreateTaskCommand> {
   constructor(private readonly service: TaskService) {}
 
   async execute(command: CreateTaskCommand): Promise<Task> {
-    const { title, description } = command.dto;
-    return this.service.create(title, description);
+    return this.service.create(command.dto);
   }
 }

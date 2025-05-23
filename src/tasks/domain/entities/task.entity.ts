@@ -1,3 +1,13 @@
+import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+
+@Entity()
 export class Task {
-  constructor(public id: string, public title: string, public description: string) {}
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
+
+  @Column()
+  title: string;
+
+  @Column()
+  description: string;
 }
