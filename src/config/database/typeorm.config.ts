@@ -1,17 +1,25 @@
+import { ConfigService } from "@nestjs/config";
 import { TypeOrmModuleOptions } from "@nestjs/typeorm";
 import { Task } from "src/tasks/domain/entities/task.entity";
 
-export const typeOrmConfig: TypeOrmModuleOptions = {
-  type: (process.env.DB_TYPE as any) || "mssql",
-  host: process.env.DB_HOST || "localhost",
-  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 1433,
-  username: process.env.DB_USERNAME,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  entities: [Task],
-  synchronize: true,
-  options: {
-    encrypt: true,
-    trustServerCertificate: true,
-  },
+export const typeOrmConfig = (
+  configService: ConfigService
+): TypeOrmModuleOptions => {
+  const portString = configService.get<string>("DB_PORT");
+  const port = portString ? parseInt(portString, 10) : 1433;
+
+  return {
+    type: (configService.get<string>("DB_TYPE") as any) || "mssql",
+    host: configService.get<string>("DB_HOST"),
+    port: port,
+    username: configService.get<string>("DB_USERNAME"),
+    password: configService.get<string>("DB_PASSWORD"),
+    database: configService.get<string>("DB_NAME"),
+    entities: [Task],
+    synchronize: true,
+    options: {
+      encrypt: true,
+      trustServerCertificate: true,
+    },
+  };
 };
