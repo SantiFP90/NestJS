@@ -1,13 +1,14 @@
 import { Module } from "@nestjs/common";
-import { CqrsModule } from "@nestjs/cqrs";
-import { TaskRepository } from "./repositories/task.repository";
-import { CreateTaskHandler } from "./commands/handlers/create-task.handler";
-import { GetTasksHandler } from "./queries/handlers/get-tasks.handler";
+import { CreateTaskHandler } from "./aplication/commands/handlers/create-task.handler";
+import { GetTasksHandler } from "./aplication/queries/handlers/get-tasks.handler";
 import { TasksController } from "./presentation/tasks.controller";
+import { TaskRepositoryService } from "./infrastructure/repository/task-repository.service";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { Task } from "./domain/entities/task.entity";
 
 @Module({
-  imports: [CqrsModule],
+  imports: [TypeOrmModule.forFeature([Task])],
   controllers: [TasksController],
-  providers: [TaskRepository, CreateTaskHandler, GetTasksHandler],
+  providers: [CreateTaskHandler, GetTasksHandler, TaskRepositoryService],
 })
 export class TasksModule {}
