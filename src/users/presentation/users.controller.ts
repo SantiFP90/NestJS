@@ -1,14 +1,14 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { CreateUsersDto } from './dto/create-users.dto';
-import { CreateUsersCommand } from '../application/commands/handlers/create-users.command';
-import { GetUserssQuery } from '../application/queries/handlers/get-userss.query';
+import { Controller, Get, Post, Body } from "@nestjs/common";
+import { CommandBus, QueryBus } from "@nestjs/cqrs";
+import { CreateUsersDto } from "./dto/create-users.dto";
+import { CreateUsersCommand } from "../application/commands/handlers/create-users.command";
+import { GetUserssQuery } from "../application/queries/handlers/get-userss.query";
 
-@Controller('users')
+@Controller("users")
 export class UsersController {
   constructor(
     private readonly commandBus: CommandBus,
-    private readonly queryBus: QueryBus,
+    private readonly queryBus: QueryBus
   ) {}
 
   @Post()
