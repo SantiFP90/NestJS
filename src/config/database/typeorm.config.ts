@@ -18,6 +18,8 @@ export const typeOrmConfig = (
     database: configService.get<string>("DB_NAME"),
     entities: [Tasks, Users],
     synchronize: true,
+    //Borrar datos
+    // dropSchema: true,
     options: {
       encrypt: true,
       trustServerCertificate: true,

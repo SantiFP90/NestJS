@@ -8,7 +8,7 @@ export class UsersService {
   constructor(private readonly usersRepository: UsersRepositoryService) {}
 
   async create(createUsersDto: CreateUsersDto): Promise<Users> {
-    const { email_user, password } = createUsersDto;
+    const { email_user, password, role } = createUsersDto;
 
     if (email_user.length < 5 || email_user.length > 100) {
       throw new BadRequestException(
@@ -20,17 +20,22 @@ export class UsersService {
       throw new BadRequestException(
         "La contraseña debe tener entre 8 y 100 caracteres."
       );
+    }
+
+    if (!role.length) {
+      throw new BadRequestException("El rol es obligatorio.");
     }
 
     const user = new Users();
     user.email_user = email_user;
     user.password = password;
+    user.role = role;
 
     return this.usersRepository.create(user);
   }
 
   async update(id: string, dto: CreateUsersDto): Promise<Users> {
-    const { email_user, password } = dto;
+    const { email_user, password, role } = dto;
 
     if (email_user.length < 5 || email_user.length > 100) {
       throw new BadRequestException(
@@ -42,12 +47,17 @@ export class UsersService {
       throw new BadRequestException(
         "La contraseña debe tener entre 8 y 100 caracteres."
       );
+    }
+
+    if (!role.length) {
+      throw new BadRequestException("El rol es obligatorio.");
     }
 
     const updatedUser = new Users();
     updatedUser.id = id;
     updatedUser.email_user = email_user;
     updatedUser.password = password;
+    updatedUser.role = role;
 
     return this.usersRepository.create(updatedUser);
   }
