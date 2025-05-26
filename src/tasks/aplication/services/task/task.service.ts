@@ -1,16 +1,15 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
 import { CreateTaskDto } from "src/tasks/presentation/dto/create-task.dto";
-import { Task } from "src/tasks/domain/entities/task.entity";
+import { Tasks } from "src/tasks/domain/entities/task.entity";
 import { TaskRepositoryService } from "../../../infrastructure/repository/task-repository.service";
 
 @Injectable()
 export class TaskService {
   constructor(private readonly taskRepository: TaskRepositoryService) {}
 
-  async create(createTaskDto: CreateTaskDto): Promise<Task> {
+  async create(createTaskDto: CreateTaskDto): Promise<Tasks> {
     const { title, description } = createTaskDto;
 
-    // Validaciones de dominio
     if (title.length < 5 || title.length > 20) {
       throw new BadRequestException(
         "El título debe tener entre 5 y 20 caracteres."
@@ -23,14 +22,14 @@ export class TaskService {
       );
     }
 
-    const task = new Task();
+    const task = new Tasks();
     task.title = title;
     task.description = description;
 
     return this.taskRepository.create(task);
   }
 
-  async update(id: string, dto: CreateTaskDto): Promise<Task> {
+  async update(id: string, dto: CreateTaskDto): Promise<Tasks> {
     const { title, description } = dto;
 
     if (title.length < 5 || title.length > 20) {
@@ -45,7 +44,7 @@ export class TaskService {
       );
     }
 
-    const updatedTask = new Task();
+    const updatedTask = new Tasks();
     updatedTask.id = id;
     updatedTask.title = title;
     updatedTask.description = description;
@@ -53,11 +52,11 @@ export class TaskService {
     return this.taskRepository.create(updatedTask);
   }
 
-  async findAll(): Promise<Task[]> {
+  async findAll(): Promise<Tasks[]> {
     return this.taskRepository.findAll();
   }
 
-  async findOne(id: string): Promise<Task> {
+  async findOne(id: string): Promise<Tasks> {
     return this.taskRepository.findOne(id);
   }
 

@@ -1,6 +1,7 @@
 import { ConfigService } from "@nestjs/config";
 import { TypeOrmModuleOptions } from "@nestjs/typeorm";
-import { Task } from "src/tasks/domain/entities/task.entity";
+import { Tasks } from "src/tasks/domain/entities/task.entity";
+import { Users } from "src/users/domain/entities/users.entity";
 
 export const typeOrmConfig = (
   configService: ConfigService
@@ -15,7 +16,7 @@ export const typeOrmConfig = (
     username: configService.get<string>("DB_USERNAME"),
     password: configService.get<string>("DB_PASSWORD"),
     database: configService.get<string>("DB_NAME"),
-    entities: [Task],
+    entities: [Tasks, Users],
     synchronize: true,
     options: {
       encrypt: true,

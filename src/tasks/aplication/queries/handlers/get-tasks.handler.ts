@@ -1,5 +1,5 @@
 import { IQueryHandler, QueryHandler } from "@nestjs/cqrs";
-import { Task } from "src/tasks/domain/entities/task.entity";
+import { Tasks } from "src/tasks/domain/entities/task.entity";
 import { TaskService } from "../../services/task/task.service";
 
 export class GetTasksQuery {}
@@ -8,7 +8,7 @@ export class GetTasksQuery {}
 export class GetTasksHandler implements IQueryHandler<GetTasksQuery> {
   constructor(private readonly service: TaskService) {}
 
-  async execute(query: GetTasksQuery): Promise<Task[]> {
+  async execute(query: GetTasksQuery): Promise<Tasks[]> {
     return await this.service.findAll();
   }
 }
