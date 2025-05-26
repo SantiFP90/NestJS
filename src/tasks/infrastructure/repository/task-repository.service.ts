@@ -1,18 +1,16 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { Task } from "../domain/entities/task.entity";
-import { CreateTaskDto } from "../presentation/dto/create-task.dto";
+import { Task } from "../../domain/entities/task.entity";
 
 @Injectable()
-export class TaskService {
+export class TaskRepositoryService {
   constructor(
     @InjectRepository(Task)
     private readonly taskRepository: Repository<Task>
   ) {}
 
-  async create(createTaskDto: CreateTaskDto): Promise<Task> {
-    const task = this.taskRepository.create(createTaskDto);
+  async create(task: Task): Promise<Task> {
     return this.taskRepository.save(task);
   }
 
@@ -22,11 +20,6 @@ export class TaskService {
 
   async findOne(id: string): Promise<Task> {
     return this.taskRepository.findOneBy({ id });
-  }
-
-  async update(id: string, dto: CreateTaskDto): Promise<Task> {
-    await this.taskRepository.update(id, dto);
-    return this.findOne(id);
   }
 
   async remove(id: string): Promise<void> {

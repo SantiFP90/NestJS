@@ -1,6 +1,6 @@
 import { IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { Task } from "src/tasks/domain/entities/task.entity";
-import { TaskService } from "src/tasks/aplication/task.service";
+import { TaskService } from "../../services/task/task.service";
 
 export class GetTasksQuery {}
 

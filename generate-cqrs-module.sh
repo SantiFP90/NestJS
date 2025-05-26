@@ -9,40 +9,39 @@ NAME=$1
 LOWER=$(echo "$NAME" | tr '[:upper:]' '[:lower:]')
 CAPITALIZED=$(echo "${NAME^}")
 
-echo "🚀 Generando módulo CQRS completo: $CAPITALIZED..."
+echo "🚀 Generando módulo CQRS estructurado: $CAPITALIZED..."
 
 # Crear estructura de carpetas
-mkdir -p src/$LOWER/{commands/handlers,queries/handlers,dto,entities,repositories}
+mkdir -p src/$LOWER/{application/commands/handlers,application/queries/handlers,application/services/$LOWER,domain/entities,infrastructure/repository,presentation/dto}
 
-# Crear DTO
-cat > src/$LOWER/dto/create-${LOWER}.dto.ts <<EOF
-export class Create${CAPITALIZED}Dto {
-  readonly name: string;
-}
+# DTO
+cat > src/$LOWER/presentation/dto/create-${LOWER}.dto.ts <<EOF
+export class Create${CAPITALIZED}Dto {}
 EOF
 
-# Crear entidad
-cat > src/$LOWER/entities/${LOWER}.entity.ts <<EOF
+# Entidad
+cat > src/$LOWER/domain/entities/${LOWER}.entity.ts <<EOF
+import { Entity, PrimaryGeneratedColumn } from 'typeorm';
+
+@Entity()
 export class ${CAPITALIZED} {
-  constructor(
-    public readonly id: string,
-    public readonly name: string
-  ) {}
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 }
 EOF
 
-# Crear repositorio
-cat > src/$LOWER/repositories/${LOWER}.repository.ts <<EOF
-import { ${CAPITALIZED} } from '../entities/${LOWER}.entity';
-import { v4 as uuid } from 'uuid';
+# Repositorio
+cat > src/$LOWER/infrastructure/repository/${LOWER}-repository.service.ts <<EOF
+import { Injectable } from '@nestjs/common';
+import { ${CAPITALIZED} } from '../../domain/entities/${LOWER}.entity';
 
-export class ${CAPITALIZED}Repository {
+@Injectable()
+export class ${CAPITALIZED}RepositoryService {
   private items: ${CAPITALIZED}[] = [];
 
-  create(name: string): ${CAPITALIZED} {
-    const item = new ${CAPITALIZED}(uuid(), name);
-    this.items.push(item);
-    return item;
+  save(entity: ${CAPITALIZED}): ${CAPITALIZED} {
+    this.items.push(entity);
+    return entity;
   }
 
   findAll(): ${CAPITALIZED}[] {
@@ -51,57 +50,79 @@ export class ${CAPITALIZED}Repository {
 }
 EOF
 
-# Comando y handler
-cat > src/$LOWER/commands/handlers/create-${LOWER}.command.ts <<EOF
-import { Create${CAPITALIZED}Dto } from '../../dto/create-${LOWER}.dto';
+# Application Service
+cat > src/$LOWER/application/services/$LOWER/${LOWER}.service.ts <<EOF
+import { Injectable } from '@nestjs/common';
+import { Create${CAPITALIZED}Dto } from '../../../presentation/dto/create-${LOWER}.dto';
+import { ${CAPITALIZED} } from '../../../domain/entities/${LOWER}.entity';
+import { ${CAPITALIZED}RepositoryService } from '../../../infrastructure/repository/${LOWER}-repository.service';
+
+@Injectable()
+export class ${CAPITALIZED}Service {
+  constructor(private readonly repo: ${CAPITALIZED}RepositoryService) {}
+
+  create(_dto: Create${CAPITALIZED}Dto): ${CAPITALIZED} {
+    const entity = new ${CAPITALIZED}();
+    return this.repo.save(entity);
+  }
+
+  findAll(): ${CAPITALIZED}[] {
+    return this.repo.findAll();
+  }
+}
+EOF
+
+# Command y Handler
+cat > src/$LOWER/application/commands/handlers/create-${LOWER}.command.ts <<EOF
+import { Create${CAPITALIZED}Dto } from '../../../presentation/dto/create-${LOWER}.dto';
 
 export class Create${CAPITALIZED}Command {
   constructor(public readonly dto: Create${CAPITALIZED}Dto) {}
 }
 EOF
 
-cat > src/$LOWER/commands/handlers/create-${LOWER}.handler.ts <<EOF
+cat > src/$LOWER/application/commands/handlers/create-${LOWER}.handler.ts <<EOF
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Create${CAPITALIZED}Command } from './create-${LOWER}.command';
-import { ${CAPITALIZED}Repository } from '../../repositories/${LOWER}.repository';
+import { ${CAPITALIZED}Service } from '../../services/${LOWER}/${LOWER}.service';
 
 @CommandHandler(Create${CAPITALIZED}Command)
 export class Create${CAPITALIZED}Handler implements ICommandHandler<Create${CAPITALIZED}Command> {
-  constructor(private readonly repo: ${CAPITALIZED}Repository) {}
+  constructor(private readonly service: ${CAPITALIZED}Service) {}
 
-    async execute(command: Create${CAPITALIZED}Command) {
-    return this.repo.create(command.dto.name);
+  async execute(command: Create${CAPITALIZED}Command) {
+    return this.service.create(command.dto);
   }
 }
 EOF
 
-# Query y handler
-cat > src/$LOWER/queries/handlers/get-${LOWER}s.query.ts <<EOF
+# Query y Handler
+cat > src/$LOWER/application/queries/handlers/get-${LOWER}s.query.ts <<EOF
 export class Get${CAPITALIZED}sQuery {}
 EOF
 
-cat > src/$LOWER/queries/handlers/get-${LOWER}s.handler.ts <<EOF
+cat > src/$LOWER/application/queries/handlers/get-${LOWER}s.handler.ts <<EOF
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Get${CAPITALIZED}sQuery } from './get-${LOWER}s.query';
-import { ${CAPITALIZED}Repository } from '../../repositories/${LOWER}.repository';
+import { ${CAPITALIZED}Service } from '../../services/${LOWER}/${LOWER}.service';
 
 @QueryHandler(Get${CAPITALIZED}sQuery)
 export class Get${CAPITALIZED}sHandler implements IQueryHandler<Get${CAPITALIZED}sQuery> {
-  constructor(private readonly repo: ${CAPITALIZED}Repository) {}
+  constructor(private readonly service: ${CAPITALIZED}Service) {}
 
-   execute() {
-    return this.repo.findAll();
+  async execute() {
+    return this.service.findAll();
   }
 }
 EOF
 
-# Controlador
-cat > src/$LOWER/${LOWER}.controller.ts <<EOF
+# Controller
+cat > src/$LOWER/presentation/${LOWER}.controller.ts <<EOF
 import { Controller, Get, Post, Body } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Create${CAPITALIZED}Dto } from './dto/create-${LOWER}.dto';
-import { Create${CAPITALIZED}Command } from './commands/handlers/create-${LOWER}.command';
-import { Get${CAPITALIZED}sQuery } from './queries/handlers/get-${LOWER}s.query';
+import { Create${CAPITALIZED}Command } from '../application/commands/handlers/create-${LOWER}.command';
+import { Get${CAPITALIZED}sQuery } from '../application/queries/handlers/get-${LOWER}s.query';
 
 @Controller('${LOWER}')
 export class ${CAPITALIZED}Controller {
@@ -122,20 +143,22 @@ export class ${CAPITALIZED}Controller {
 }
 EOF
 
-# Modulo
+# Module
 cat > src/$LOWER/${LOWER}.module.ts <<EOF
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
-import { ${CAPITALIZED}Controller } from './${LOWER}.controller';
-import { ${CAPITALIZED}Repository } from './repositories/${LOWER}.repository';
-import { Create${CAPITALIZED}Handler } from './commands/handlers/create-${LOWER}.handler';
-import { Get${CAPITALIZED}sHandler } from './queries/handlers/get-${LOWER}s.handler';
+import { ${CAPITALIZED}Controller } from './presentation/${LOWER}.controller';
+import { ${CAPITALIZED}RepositoryService } from './infrastructure/repository/${LOWER}-repository.service';
+import { ${CAPITALIZED}Service } from './application/services/${LOWER}/${LOWER}.service';
+import { Create${CAPITALIZED}Handler } from './application/commands/handlers/create-${LOWER}.handler';
+import { Get${CAPITALIZED}sHandler } from './application/queries/handlers/get-${LOWER}s.handler';
 
 @Module({
   imports: [CqrsModule],
   controllers: [${CAPITALIZED}Controller],
   providers: [
-    ${CAPITALIZED}Repository,
+    ${CAPITALIZED}RepositoryService,
+    ${CAPITALIZED}Service,
     Create${CAPITALIZED}Handler,
     Get${CAPITALIZED}sHandler
   ],
@@ -143,4 +166,4 @@ import { Get${CAPITALIZED}sHandler } from './queries/handlers/get-${LOWER}s.hand
 export class ${CAPITALIZED}Module {}
 EOF
 
-echo "✅ Módulo $CAPITALIZED CQRS generado con éxito."
+echo "✅ Módulo $CAPITALIZED CQRS generado con éxito en estructura nueva."
